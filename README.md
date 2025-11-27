@@ -7,6 +7,7 @@ A modern, animated Pac‑Man clone built with **Pygame**.
 - Animated homepage (pulsing grid, floating Pac‑Man, bouncing title)
 - Multiple maze layouts (5 distinct boards, cycling each level)
 - Level‑based speed increase (15 % per level)
+- **Pause Functionality**: Press SPACE, ESC, or click the on-screen button to pause
 - Touch‑sensitive navigation (mouse clicks) and keyboard fallback
 - Detailed **Instructions** page with clear sections
 - **ABOUT US** credits displayed on the home screen

@@ -905,6 +905,10 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
     else:
         level = copy.deepcopy(all_boards[board_index % len(all_boards)])
 
+    paused = False
+    pause_font = pygame.font.Font('freesansbold.ttf', 20)
+    pause_rect = pygame.Rect(WIDTH - 100, 10, 80, 30)
+
     run = True
     while run:
         timer.tick(fps)
@@ -957,31 +961,55 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
         if clyde_dead:
             ghost_speeds[3] = 4 * speed_mult
 
+        player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 20, 2)
+        draw_player()
+        blinky = Ghost(blinky_x, blinky_y, targets[0], ghost_speeds[0], blinky_img, blinky_direction, blinky_dead, blinky_box, 0)
+        inky = Ghost(inky_x, inky_y, targets[1], ghost_speeds[1], inky_img, inky_direction, inky_dead, inky_box, 1)
+        pinky = Ghost(pinky_x, pinky_y, targets[2], ghost_speeds[2], pinky_img, pinky_direction, pinky_dead, pinky_box, 2)
+        clyde = Ghost(clyde_x, clyde_y, targets[3], ghost_speeds[3], clyde_img, clyde_direction, clyde_dead, clyde_box, 3)
+        draw_misc()
+        
+        # Draw Pause Button
+        pygame.draw.rect(screen, (50, 50, 70), pause_rect, border_radius=5)
+        pygame.draw.rect(screen, (100, 100, 150), pause_rect, 2, border_radius=5)
+        pause_text = pause_font.render("PAUSE", True, 'white')
+        text_rect = pause_text.get_rect(center=pause_rect.center)
+        screen.blit(pause_text, text_rect)
+
+        if paused:
+            # Draw Pause Overlay
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))
+            screen.blit(overlay, (0, 0))
+            
+            big_font = pygame.font.Font('freesansbold.ttf', 60)
+            paused_text = big_font.render("PAUSED", True, 'yellow')
+            paused_rect = paused_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+            screen.blit(paused_text, paused_rect)
+            
+            resume_text = font.render("Press SPACE or Click to Resume", True, 'white')
+            resume_rect = resume_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 60))
+            screen.blit(resume_text, resume_rect)
+            
+            pygame.display.flip()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return "QUIT"
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
+                        paused = not paused
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if pause_rect.collidepoint(event.pos):
+                        paused = not paused
+            continue
+
+
+
         game_won = True
         for i in range(len(level)):
             if 1 in level[i] or 2 in level[i]:
                 game_won = False
-        
-        if game_won:
-            # Return immediately on win to let manager handle level progression
-            return "VICTORY"
-
-        player_circle = pygame.draw.circle(screen, 'black', (center_x, center_y), 20, 2)
-        draw_player()
-        blinky = Ghost(blinky_x, blinky_y, targets[0], ghost_speeds[0], blinky_img, blinky_direction, blinky_dead,
-                       blinky_box, 0)
-        inky = Ghost(inky_x, inky_y, targets[1], ghost_speeds[1], inky_img, inky_direction, inky_dead,
-                     inky_box, 1)
-        pinky = Ghost(pinky_x, pinky_y, targets[2], ghost_speeds[2], pinky_img, pinky_direction, pinky_dead,
-                      pinky_box, 2)
-        clyde = Ghost(clyde_x, clyde_y, targets[3], ghost_speeds[3], clyde_img, clyde_direction, clyde_dead,
-                      clyde_box, 3)
-        draw_misc()
-        targets = get_targets(blinky_x, blinky_y, inky_x, inky_y, pinky_x, pinky_y, clyde_x, clyde_y)
-
-        turns_allowed = check_position(center_x, center_y)
-        if moving:
-            player_x, player_y = move_player(player_x, player_y)
             if not blinky_dead and not blinky.in_box:
                 blinky_x, blinky_y, blinky_direction = blinky.move_blinky()
             else:
