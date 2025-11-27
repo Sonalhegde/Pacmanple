@@ -672,12 +672,25 @@ class Ghost:
 
 
 def draw_misc():
-    score_text = font.render(f'Score: {score}', True, 'white')
-    screen.blit(score_text, (10, 10))
+    # Colorful Score (Top Left)
+    score_label = font.render('Score:', True, 'white')
+    score_value = font.render(f'{score}', True, (0, 255, 255)) # Cyan score
+    screen.blit(score_label, (10, 10))
+    screen.blit(score_value, (80, 10))
+    
+    # Lives (Center Top)
+    for i in range(lives):
+        screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (WIDTH // 2 - 45 + i * 40, 10))
+    
+    # Level Indicator (Below Score)
+    try:
+        level_text = font.render(f'Lvl: {current_level_display}', True, (255, 255, 0)) # Yellow
+        screen.blit(level_text, (10, 40))
+    except NameError:
+        pass 
+        
     if powerup:
         pygame.draw.circle(screen, 'blue', (140, 930), 15)
-    for i in range(lives):
-        screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (650 + i * 40, 10))
     if game_over:
         pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
         pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
@@ -892,12 +905,14 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
     return [blink_target, ink_target, pink_target, clyd_target]
 
 
-def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
+def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
     global counter, flicker, power_counter, powerup, eaten_ghost, startup_counter, moving, \
            player_x, player_y, direction, direction_command, blinky_x, blinky_y, blinky_direction, \
            inky_x, inky_y, inky_direction, pinky_x, pinky_y, pinky_direction, clyde_x, clyde_y, clyde_direction, \
            blinky_dead, inky_dead, clyde_dead, pinky_dead, score, lives, game_over, game_won, level, targets, \
-           turns_allowed, blinky, inky, pinky, clyde, ghost_speeds
+           turns_allowed, blinky, inky, pinky, clyde, ghost_speeds, current_level_display
+
+    current_level_display = level_num
 
     # Load the appropriate board
     if board_index < len(all_boards):
@@ -969,7 +984,7 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
         clyde = Ghost(clyde_x, clyde_y, targets[3], ghost_speeds[3], clyde_img, clyde_direction, clyde_dead, clyde_box, 3)
         draw_misc()
         
-        # Draw Pause Button
+        # Draw Pause Button (Top Right, non-colliding)
         pygame.draw.rect(screen, (50, 50, 70), pause_rect, border_radius=5)
         pygame.draw.rect(screen, (100, 100, 150), pause_rect, 2, border_radius=5)
         pause_text = pause_font.render("PAUSE", True, 'white')
@@ -977,19 +992,40 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
         screen.blit(pause_text, text_rect)
 
         if paused:
-            # Draw Pause Overlay
+            # Draw Pause Overlay (Pac-Man 256 Style)
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 128))
+            overlay.fill((0, 0, 50, 200)) # Dark blue transparent background
             screen.blit(overlay, (0, 0))
             
-            big_font = pygame.font.Font('freesansbold.ttf', 60)
-            paused_text = big_font.render("PAUSED", True, 'yellow')
-            paused_rect = paused_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+            # PAUSED Title
+            big_font = pygame.font.Font('freesansbold.ttf', 80)
+            paused_text = big_font.render("PAUSED", True, 'white')
+            paused_rect = paused_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 150))
             screen.blit(paused_text, paused_rect)
             
-            resume_text = font.render("Press SPACE or Click to Resume", True, 'white')
-            resume_rect = resume_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 60))
-            screen.blit(resume_text, resume_rect)
+            # Buttons Style
+            btn_width = 250
+            btn_height = 60
+            resume_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, HEIGHT // 2 - 30, btn_width, btn_height)
+            quit_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, HEIGHT // 2 + 50, btn_width, btn_height)
+            
+            mouse_pos = pygame.mouse.get_pos()
+            
+            # Resume Button
+            resume_hover = resume_rect.collidepoint(mouse_pos)
+            pygame.draw.rect(screen, (0, 200, 255) if resume_hover else (0, 150, 200), resume_rect, border_radius=8) # Cyan
+            pygame.draw.rect(screen, (255, 150, 0), resume_rect, 4, border_radius=8) # Orange border
+            resume_txt = font.render("RESUME", True, 'white')
+            resume_txt_rect = resume_txt.get_rect(center=resume_rect.center)
+            screen.blit(resume_txt, resume_txt_rect)
+            
+            # Quit Button
+            quit_hover = quit_rect.collidepoint(mouse_pos)
+            pygame.draw.rect(screen, (0, 200, 255) if quit_hover else (0, 150, 200), quit_rect, border_radius=8) # Cyan
+            pygame.draw.rect(screen, (255, 150, 0), quit_rect, 4, border_radius=8) # Orange border
+            quit_txt = font.render("QUIT", True, 'white')
+            quit_txt_rect = quit_txt.get_rect(center=quit_rect.center)
+            screen.blit(quit_txt, quit_txt_rect)
             
             pygame.display.flip()
             
@@ -1002,6 +1038,10 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if pause_rect.collidepoint(event.pos):
                         paused = not paused
+                    elif resume_rect.collidepoint(event.pos):
+                        paused = False
+                    elif quit_rect.collidepoint(event.pos):
+                        return "QUIT"
             continue
 
 
