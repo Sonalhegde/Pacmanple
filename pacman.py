@@ -1046,10 +1046,22 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
 
 
 
+
         game_won = True
         for i in range(len(level)):
             if 1 in level[i] or 2 in level[i]:
                 game_won = False
+                break  # Exit early once we know there are dots left
+        
+        if game_won:
+            # Return immediately on win to let manager handle level progression
+            return "VICTORY"
+
+        targets = get_targets(blinky_x, blinky_y, inky_x, inky_y, pinky_x, pinky_y, clyde_x, clyde_y)
+
+        turns_allowed = check_position(center_x, center_y)
+        if moving:
+            player_x, player_y = move_player(player_x, player_y)
             if not blinky_dead and not blinky.in_box:
                 blinky_x, blinky_y, blinky_direction = blinky.move_blinky()
             else:
@@ -1246,6 +1258,7 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
             eaten_ghost[3] = True
             score += (2 ** eaten_ghost.count(True)) * 100
 
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "QUIT"
@@ -1258,9 +1271,14 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                     direction_command = 2
                 if event.key == pygame.K_DOWN:
                     direction_command = 3
-                if event.key == pygame.K_SPACE and (game_over or game_won):
-                    # Original restart logic, but we want to return status
-                    pass
+                if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
+                    # Toggle pause
+                    paused = not paused
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # Check if pause button was clicked
+                if pause_rect.collidepoint(event.pos):
+                    paused = not paused
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT and direction_command == 0:
@@ -1271,6 +1289,7 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                     direction_command = direction
                 if event.key == pygame.K_DOWN and direction_command == 3:
                     direction_command = direction
+
 
         if direction_command == 0 and turns_allowed[0]:
             direction = 0
