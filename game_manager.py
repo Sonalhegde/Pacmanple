@@ -216,32 +216,109 @@ class GameManager:
         pygame.display.flip()
 
     def draw_instructions(self):
-        screen.fill((20, 40, 80))
+        screen.fill((10, 10, 15))
         
         # Title
-        title_font = pygame.font.Font('freesansbold.ttf', 50)
-        title = title_font.render("INSTRUCTIONS", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 80))
+        title_font = pygame.font.Font('freesansbold.ttf', 48)
+        title = title_font.render("HOW TO PLAY", True, YELLOW)
+        title_rect = title.get_rect(center=(WIDTH // 2, 60))
         screen.blit(title, title_rect)
         
-        # Instructions with icons
-        inst_font = pygame.font.Font('freesansbold.ttf', 22)
-        instructions = [
-            "🎮  Use ARROW KEYS to move Pac-Man",
-            "⚫  Eat all dots to advance levels",
-            "👻  Avoid the ghosts!",
-            "🔵  Eat power pellets to chase ghosts",
-            "⭐  Each level gets faster and harder"
-        ]
+        # Decorative line
+        pygame.draw.line(screen, (70, 120, 220), (WIDTH // 2 - 150, 100), (WIDTH // 2 + 150, 100), 3)
         
-        y_start = 200
-        for i, line in enumerate(instructions):
-            text = inst_font.render(line, True, WHITE)
-            text_rect = text.get_rect(center=(WIDTH // 2, y_start + i * 60))
-            screen.blit(text, text_rect)
+        # Instructions sections
+        section_font = pygame.font.Font('freesansbold.ttf', 24)
+        inst_font = pygame.font.Font('freesansbold.ttf', 18)
+        
+        y_pos = 140
+        
+        # OBJECTIVE Section
+        objective_title = section_font.render("OBJECTIVE", True, (100, 200, 255))
+        screen.blit(objective_title, (100, y_pos))
+        y_pos += 35
+        
+        objective_text = [
+            "• Eat all the dots to complete each level",
+            "• Avoid the ghosts or you'll lose a life",
+            "• Clear all levels to win the game"
+        ]
+        for text in objective_text:
+            line = inst_font.render(text, True, (200, 210, 230))
+            screen.blit(line, (120, y_pos))
+            y_pos += 28
+        
+        y_pos += 15
+        
+        # CONTROLS Section
+        controls_title = section_font.render("CONTROLS", True, (100, 200, 255))
+        screen.blit(controls_title, (100, y_pos))
+        y_pos += 35
+        
+        controls_text = [
+            "• Arrow Keys: Move Pac-Man (Up, Down, Left, Right)",
+            "• ESC: Pause or return to menu",
+            "• Mouse Click: Navigate menus"
+        ]
+        for text in controls_text:
+            line = inst_font.render(text, True, (200, 210, 230))
+            screen.blit(line, (120, y_pos))
+            y_pos += 28
+        
+        y_pos += 15
+        
+        # POWER-UPS Section
+        powerup_title = section_font.render("POWER-UPS", True, (100, 200, 255))
+        screen.blit(powerup_title, (100, y_pos))
+        y_pos += 35
+        
+        powerup_text = [
+            "• Small Dots: 10 points each",
+            "• Power Pellets (Big Dots): 50 points + Ghost Hunt Mode",
+            "• During Power Mode: Eat blue ghosts for bonus points!"
+        ]
+        for text in powerup_text:
+            line = inst_font.render(text, True, (200, 210, 230))
+            screen.blit(line, (120, y_pos))
+            y_pos += 28
+        
+        y_pos += 15
+        
+        # GHOSTS Section
+        ghosts_title = section_font.render("GHOSTS", True, (100, 200, 255))
+        screen.blit(ghosts_title, (100, y_pos))
+        y_pos += 35
+        
+        ghosts_text = [
+            "• Red Ghost (Blinky): Chases you directly",
+            "• Pink Ghost (Pinky): Tries to ambush you",
+            "• Blue Ghost (Inky): Unpredictable movement",
+            "• Orange Ghost (Clyde): Patrols and chases"
+        ]
+        for text in ghosts_text:
+            line = inst_font.render(text, True, (200, 210, 230))
+            screen.blit(line, (120, y_pos))
+            y_pos += 28
+        
+        y_pos += 15
+        
+        # LEVELS Section
+        levels_title = section_font.render("LEVELS", True, (100, 200, 255))
+        screen.blit(levels_title, (100, y_pos))
+        y_pos += 35
+        
+        levels_text = [
+            "• Each level increases speed by 15%",
+            "• Different maze layouts every level",
+            "• You start with 3 lives - use them wisely!"
+        ]
+        for text in levels_text:
+            line = inst_font.render(text, True, (200, 210, 230))
+            screen.blit(line, (120, y_pos))
+            y_pos += 28
         
         # Back button
-        back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 650, 200, 50)
+        back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 850, 200, 50)
         mouse_pos = pygame.mouse.get_pos()
         is_hover = back_btn_rect.collidepoint(mouse_pos)
         
@@ -359,11 +436,12 @@ class GameManager:
             speed_mult = 1.0 + (self.current_level - 1) * 0.15
             board_index = (self.current_level - 1) % 5  # Cycle through 5 boards
             
-            # Show Level Screen briefly?
-            screen.fill(BLACK)
-            self.draw_text_centered(f"LEVEL {self.current_level}", font, YELLOW, HEIGHT // 2)
-            pygame.display.flip()
-            pygame.time.delay(2000)
+            # Show Level Screen only for levels 2+
+            if self.current_level > 1:
+                screen.fill(BLACK)
+                self.draw_text_centered(f"LEVEL {self.current_level}", font, YELLOW, HEIGHT // 2)
+                pygame.display.flip()
+                pygame.time.delay(2000)
             
             # Play Level
             result = pacman.play_level(speed_mult=speed_mult, board_index=board_index)
@@ -468,7 +546,7 @@ class GameManager:
                         self.running = False
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_pos = pygame.mouse.get_pos()
-                        back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 650, 200, 50)
+                        back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 850, 200, 50)
                         if back_btn_rect.collidepoint(mouse_pos):
                             self.state = STATE_MENU
                     if event.type == pygame.KEYDOWN:
