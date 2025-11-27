@@ -23,9 +23,8 @@
 - **Power-ups**: Eat power pellets to turn the tables on ghosts
 
 ### Development Team
-- **SIDDHARTH R** - NNM24AC049
-- **SONAL HEGDE** - NNM24AC050
-- **SOUMYA SM** - NNM24AC051
+
+- **SONAL HEGDE** -
 
 ---
 
