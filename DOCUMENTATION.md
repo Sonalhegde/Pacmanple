@@ -1008,9 +1008,9 @@ pygame.draw.circle(screen, 'white', ...)  # Can use color names
 ## Credits & License
 
 ### Development Team
-- **SIDDHARTH R** - NNM24AC049
+- 
 - **SONAL HEGDE** - NNM24AC050
-- **SOUMYA SM** - NNM24AC051
+-
 
 ### Technology Stack
 - **Python 3.13.2**
