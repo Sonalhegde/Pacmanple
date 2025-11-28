@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import math
+import random
 
 # Initialize Pygame
 pygame.init()
@@ -14,6 +15,22 @@ HEIGHT = 950
 screen = pacman.screen
 font = pygame.font.Font('freesansbold.ttf', 32)
 small_font = pygame.font.Font('freesansbold.ttf', 20)
+title_font = pygame.font.Font('freesansbold.ttf', 90)
+sub_font = pygame.font.Font('freesansbold.ttf', 30)
+btn_font = pygame.font.Font('freesansbold.ttf', 32)
+footer_font = pygame.font.Font('freesansbold.ttf', 16)
+version_font = pygame.font.Font('freesansbold.ttf', 13)
+info_font = pygame.font.Font('freesansbold.ttf', 28)
+credit_font = pygame.font.Font('freesansbold.ttf', 22)
+desc_font = pygame.font.Font('freesansbold.ttf', 20)
+section_font = pygame.font.Font('freesansbold.ttf', 24)
+inst_font = pygame.font.Font('freesansbold.ttf', 18)
+score_font = pygame.font.Font('freesansbold.ttf', 32)
+large_score_font = pygame.font.Font('freesansbold.ttf', 40)
+prompt_font = pygame.font.Font('freesansbold.ttf', 28)
+input_font = pygame.font.Font('freesansbold.ttf', 45)
+level_font = pygame.font.Font('freesansbold.ttf', 80)
+header_font = pygame.font.Font('freesansbold.ttf', 50)
 
 # Colors
 WHITE = (255, 255, 255)
@@ -21,6 +38,10 @@ BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
+CYBER_YELLOW = (252, 238, 10)
+CYBER_BLUE = (0, 240, 255)
+CYBER_PINK = (255, 0, 60)
+DARK_BG = (5, 5, 10)
 
 # States
 STATE_MENU = 1
@@ -43,6 +64,17 @@ class GameManager:
         self.current_level = 1
         self.current_lives = 3
         self.input_name = ""
+        
+        # Background Particles
+        self.particles = []
+        for i in range(50):
+            self.particles.append({
+                'x': random.randint(0, WIDTH),
+                'y': random.randint(0, HEIGHT),
+                'speed': random.uniform(0.2, 1.5),
+                'size': random.randint(2, 4),
+                'color': random.choice([CYBER_BLUE, CYBER_PINK, CYBER_YELLOW, (50, 50, 50)])
+            })
 
     def load_high_scores(self):
         if os.path.exists(HIGH_SCORE_FILE):
@@ -57,174 +89,163 @@ class GameManager:
         with open(HIGH_SCORE_FILE, 'w') as f:
             json.dump(self.high_scores, f)
 
+    def draw_background(self):
+        screen.fill(DARK_BG)
+        
+        # Animated Cyber Circles
+        time_ticks = pygame.time.get_ticks()
+        center = (WIDTH // 2, HEIGHT // 2)
+        
+        # Outer pulsing ring
+        radius1 = 350 + math.sin(time_ticks * 0.001) * 10
+        pygame.draw.circle(screen, (15, 20, 30), center, int(radius1), 2)
+        
+        # Inner rotating gaps ring (simulated with arcs)
+        radius2 = 280
+        angle_offset = time_ticks * 0.0005
+        for i in range(0, 360, 45):
+            start_angle = math.radians(i) + angle_offset
+            end_angle = math.radians(i + 30) + angle_offset
+            pygame.draw.arc(screen, (20, 30, 40), 
+                          (center[0] - radius2, center[1] - radius2, radius2 * 2, radius2 * 2), 
+                          start_angle, end_angle, 4)
+
+        # Cyber Grid
+        grid_color = (20, 25, 35)
+        for x in range(0, WIDTH, 40):
+            pygame.draw.line(screen, grid_color, (x, 0), (x, HEIGHT), 1)
+        for y in range(0, HEIGHT, 40):
+            pygame.draw.line(screen, grid_color, (0, y), (WIDTH, y), 1)
+            
+        # Draw Particles
+        for p in self.particles:
+            p['y'] -= p['speed']
+            if p['y'] < 0:
+                p['y'] = HEIGHT
+                p['x'] = random.randint(0, WIDTH)
+                
+            # Draw particle with alpha
+            # Since pygame.draw doesn't support alpha directly on screen, use a temp surface
+            s = pygame.Surface((p['size'], p['size']), pygame.SRCALPHA)
+            alpha = int(100 + 155 * (p['y'] / HEIGHT)) # Fade out at top
+            s.fill((*p['color'], alpha))
+            screen.blit(s, (p['x'], p['y']))
+
+        # Scanlines
+        for y in range(0, HEIGHT, 4):
+            pygame.draw.line(screen, (0, 0, 0), (0, y), (WIDTH, y), 1)
+
+    def draw_cyber_panel(self, rect, color=(20, 20, 30), alpha=240, border_color=CYBER_BLUE, border_width=2):
+        # Chamfered corners
+        cut = 20
+        x, y, w, h = rect.x, rect.y, rect.width, rect.height
+        
+        points = [
+            (x + cut, y), (x + w, y), (x + w, y + h - cut),
+            (x + w - cut, y + h), (x, y + h), (x, y + cut)
+        ]
+        
+        # Background
+        shape_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+        local_points = [
+            (cut, 0), (w, 0), (w, h - cut),
+            (w - cut, h), (0, h), (0, cut)
+        ]
+        pygame.draw.polygon(shape_surf, (*color, alpha), local_points)
+        screen.blit(shape_surf, (x, y))
+        
+        # Border
+        pygame.draw.polygon(screen, border_color, points, border_width)
+        
+        # Tech accents
+        pygame.draw.line(screen, border_color, (x + cut, y + 5), (x + w // 3, y + 5), 1)
+        pygame.draw.line(screen, border_color, (x + w - cut, y + h - 5), (x + w - w // 3, y + h - 5), 1)
+
     def draw_text_centered(self, text, font, color, y_offset):
         text_surface = font.render(text, True, color)
         text_rect = text_surface.get_rect(center=(WIDTH // 2, y_offset))
+        # Drop shadow
+        shadow = font.render(text, True, (0, 0, 0))
+        shadow_rect = shadow.get_rect(center=(WIDTH // 2 + 2, y_offset + 2))
+        screen.blit(shadow, shadow_rect)
         screen.blit(text_surface, text_rect)
 
     def draw_menu(self):
-        # Dark theme background - deep black
-        screen.fill((10, 10, 15))
+        self.draw_background()
         
-        # Animated grid pattern for depth
-        time_offset = pygame.time.get_ticks() * 0.001
-        for i in range(0, WIDTH, 60):
-            alpha = int(abs(math.sin(time_offset + i * 0.01)) * 30 + 20)
-            pygame.draw.line(screen, (alpha, alpha, alpha + 5), (i, 0), (i, HEIGHT), 1)
-        for j in range(0, HEIGHT, 60):
-            alpha = int(abs(math.cos(time_offset + j * 0.01)) * 30 + 20)
-            pygame.draw.line(screen, (alpha, alpha, alpha + 5), (0, j), (WIDTH, j), 1)
-        
-        # Animated Pac-Man character
-        pac_time = pygame.time.get_ticks() * 0.003
-        pac_x = int((math.sin(pac_time * 0.5) + 1) * (WIDTH - 100) / 2 + 50)
-        pac_y = 60
-        pac_size = 35
-        
-        # Pac-Man body
-        pygame.draw.circle(screen, (255, 255, 0), (pac_x, pac_y), pac_size)
-        
-        # Animated mouth
-        mouth_angle = abs(math.sin(pac_time * 3)) * 40
-        mouth_points = [
-            (pac_x, pac_y),
-            (int(pac_x + pac_size * math.cos(math.radians(mouth_angle))), 
-             int(pac_y - pac_size * math.sin(math.radians(mouth_angle)))),
-            (int(pac_x + pac_size * math.cos(math.radians(-mouth_angle))), 
-             int(pac_y + pac_size * math.sin(math.radians(mouth_angle))))
-        ]
-        pygame.draw.polygon(screen, (10, 10, 15), mouth_points)
-        
-        # Main title "PAC-MAN" with pulsing glow effect
-        title_font = pygame.font.Font('freesansbold.ttf', 95)
-        pulse = abs(math.sin(pygame.time.get_ticks() * 0.002)) * 10 + 5
-        
-        # Animated glow layers
-        for offset in [int(pulse), int(pulse * 0.7), int(pulse * 0.4)]:
-            glow_alpha = int(60 - offset * 3)
-            glow_text = title_font.render("PAC-MAN", True, (glow_alpha, glow_alpha, glow_alpha + 20))
-            glow_rect = glow_text.get_rect(center=(WIDTH // 2 + offset, 160 + offset))
-            screen.blit(glow_text, glow_rect)
-        
-        # Main title with gradient effect
-        title_colors = [(255, 255, 100), (255, 220, 50), (255, 180, 0)]
+        # Glitch Title
         title_text = "PAC-MAN"
-        title_x_start = WIDTH // 2 - 270
         
-        # Animated letter bounce
-        for i, letter in enumerate(title_text):
-            bounce = math.sin(pygame.time.get_ticks() * 0.003 + i * 0.5) * 5
-            if letter != "-":
-                color = title_colors[i % len(title_colors)]
-                letter_surface = title_font.render(letter, True, color)
-                screen.blit(letter_surface, (title_x_start + i * 75, 150 + bounce))
-            else:
-                letter_surface = title_font.render(letter, True, (220, 220, 220))
-                screen.blit(letter_surface, (title_x_start + i * 75, 150 + bounce))
+        # Glitch layers
+        offset_x = 4
+        screen.blit(title_font.render(title_text, True, CYBER_PINK), (WIDTH//2 - 200 + offset_x, 100))
+        screen.blit(title_font.render(title_text, True, CYBER_BLUE), (WIDTH//2 - 200 - offset_x, 100))
         
-        # Subtitle "CLASSIC EDITION" with better font
-        subtitle_font = pygame.font.Font('freesansbold.ttf', 26)
-        subtitle = subtitle_font.render("CLASSIC EDITION", True, (120, 170, 255))
-        subtitle_rect = subtitle.get_rect(center=(WIDTH // 2, 260))
-        screen.blit(subtitle, subtitle_rect)
+        # Main Title
+        title_surf = title_font.render(title_text, True, CYBER_YELLOW)
+        screen.blit(title_surf, (WIDTH//2 - 200, 100))
         
-        # Animated decorative line
-        line_width = int(abs(math.sin(pygame.time.get_ticks() * 0.002)) * 50 + 150)
-        pygame.draw.line(screen, (70, 120, 220), (WIDTH // 2 - line_width, 290), 
-                        (WIDTH // 2 + line_width, 290), 3)
-        
-        # Menu buttons with floating animation
-        button_font = pygame.font.Font('freesansbold.ttf', 28)
+        # Subtitle
+        sub_text = sub_font.render("CYBERPUNK EDITION", True, CYBER_BLUE)
+        screen.blit(sub_text, (WIDTH//2 - sub_text.get_width()//2, 200))
+
+        # Menu Buttons
         buttons = [
-            {"text": "START GAME", "y": 340, "icon": "▶"},
-            {"text": "LEVELS", "y": 425, "icon": "☰"},
-            {"text": "INSTRUCTIONS", "y": 510, "icon": "ℹ"},
-            {"text": "HIGH SCORES", "y": 595, "icon": "★"},
-            {"text": "ABOUT US", "y": 680, "icon": "👥"},
-            {"text": "EXIT GAME", "y": 765, "icon": "✕"}
+            {"text": "START GAME", "y": 300, "icon": "▶"},
+            {"text": "LEVELS", "y": 390, "icon": "☰"},
+            {"text": "INSTRUCTIONS", "y": 480, "icon": "ℹ"},
+            {"text": "HIGH SCORES", "y": 570, "icon": "★"},
+            {"text": "ABOUT US", "y": 660, "icon": "👥"},
+            {"text": "EXIT GAME", "y": 750, "icon": "✕"}
         ]
         
         mouse_pos = pygame.mouse.get_pos()
         
-        for idx, btn in enumerate(buttons):
-            # Floating animation
-            float_offset = math.sin(pygame.time.get_ticks() * 0.002 + idx * 0.8) * 3
-            btn_y = btn["y"] + float_offset
-            btn_rect = pygame.Rect(WIDTH // 2 - 190, int(btn_y), 380, 65)
-            is_hover = btn_rect.collidepoint(mouse_pos)
+        for btn in buttons:
+            rect = pygame.Rect(WIDTH // 2 - 200, btn["y"], 400, 70)
+            is_hover = rect.collidepoint(mouse_pos)
             
-            # Button background with gradient effect
+            # Button Style
             if is_hover:
-                # Brighter on hover with pulse
-                pulse_color = int(abs(math.sin(pygame.time.get_ticks() * 0.005)) * 40 + 80)
-                pygame.draw.rect(screen, (50, pulse_color, 160), btn_rect, border_radius=12)
-                pygame.draw.rect(screen, (70, pulse_color + 40, 220), btn_rect.inflate(-6, -6), border_radius=10)
+                self.draw_cyber_panel(rect, color=(252, 238, 10), alpha=255, border_color=WHITE)
+                text_color = BLACK
             else:
-                pygame.draw.rect(screen, (28, 38, 55), btn_rect, border_radius=12)
-                pygame.draw.rect(screen, (38, 48, 70), btn_rect.inflate(-6, -6), border_radius=10)
-            
-            # Button border glow
-            border_color = (100, 170, 255) if is_hover else (55, 75, 110)
-            pygame.draw.rect(screen, border_color, btn_rect, 3, border_radius=12)
-            
-            # Icon with animation on hover
-            icon_font = pygame.font.Font('freesansbold.ttf', 32)
-            icon_color = (255, 220, 100) if is_hover else (160, 160, 190)
-            icon_surface = icon_font.render(btn["icon"], True, icon_color)
-            icon_x = btn_rect.left + 25
-            if is_hover:
-                icon_x += int(math.sin(pygame.time.get_ticks() * 0.01) * 3)
-            screen.blit(icon_surface, (icon_x, btn_rect.centery - 16))
-            
-            # Button text
-            text_color = (255, 255, 255) if is_hover else (190, 200, 220)
-            text_surface = button_font.render(btn["text"], True, text_color)
-            text_rect = text_surface.get_rect(center=(btn_rect.centerx + 25, btn_rect.centery))
-            screen.blit(text_surface, text_rect)
-        
-        # Footer text with better font
-        footer_font = pygame.font.Font('freesansbold.ttf', 15)
-        footer = footer_font.render("Click to select or press 1-6", True, (90, 100, 120))
-        footer_rect = footer.get_rect(center=(WIDTH // 2, 860))
-        screen.blit(footer, footer_rect)
-        
-        # Version info
-        version_font = pygame.font.Font('freesansbold.ttf', 13)
-        version = version_font.render("v1.0 | Enhanced Edition", True, (70, 80, 100))
-        version_rect = version.get_rect(center=(WIDTH // 2, 920))
-        screen.blit(version, version_rect)
+                self.draw_cyber_panel(rect, color=(20, 20, 30), border_color=CYBER_BLUE)
+                text_color = CYBER_BLUE
+                
+            # Text
+            text_surf = btn_font.render(f"{btn['icon']}  {btn['text']}", True, text_color)
+            text_rect = text_surf.get_rect(center=rect.center)
+            screen.blit(text_surf, text_rect)
+
+        # Footer
+        footer = footer_font.render("v2.0 | Remastered UI", True, (100, 100, 150))
+        screen.blit(footer, (WIDTH//2 - footer.get_width()//2, 900))
         
         pygame.display.flip()
 
     def draw_about(self):
-        screen.fill((10, 10, 15))
+        self.draw_background()
         
         # Title
-        title_font = pygame.font.Font('freesansbold.ttf', 50)
-        title = title_font.render("ABOUT US", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 100))
-        screen.blit(title, title_rect)
+        self.draw_text_centered("ABOUT US", header_font, CYBER_YELLOW, 80)
         
-        # Decorative line
-        pygame.draw.line(screen, (70, 120, 220), (WIDTH // 2 - 150, 150), (WIDTH // 2 + 150, 150), 3)
+        # Content Panel
+        panel_rect = pygame.Rect(WIDTH // 2 - 350, 150, 700, 550)
+        self.draw_cyber_panel(panel_rect, border_color=CYBER_PINK)
         
         # Team info
-        info_font = pygame.font.Font('freesansbold.ttf', 24)
-        credit_font = pygame.font.Font('freesansbold.ttf', 20)
-        
-        y_pos = 220
+        y_pos = 200
         
         # Project title
-        project_title = info_font.render("PAC-MAN CLASSIC EDITION", True, (100, 200, 255))
-        project_rect = project_title.get_rect(center=(WIDTH // 2, y_pos))
-        screen.blit(project_title, project_rect)
+        project_title = info_font.render("PAC-MAN CYBERPUNK", True, CYBER_BLUE)
+        screen.blit(project_title, (WIDTH//2 - project_title.get_width()//2, y_pos))
         y_pos += 60
         
         # Team section
-        team_title = info_font.render("DEVELOPMENT TEAM", True, (150, 180, 255))
-        team_rect = team_title.get_rect(center=(WIDTH // 2, y_pos))
-        screen.blit(team_title, team_rect)
-        y_pos += 60
+        team_title = info_font.render("DEVELOPMENT TEAM", True, CYBER_YELLOW)
+        screen.blit(team_title, (WIDTH//2 - team_title.get_width()//2, y_pos))
+        y_pos += 50
         
         # Team members
         credits = [
@@ -233,49 +254,48 @@ class GameManager:
             "SOUMYA SM - NNM24AC051"
         ]
         
-        for i, credit in enumerate(credits):
-            credit_text = credit_font.render(credit, True, (200, 210, 230))
-            credit_rect = credit_text.get_rect(center=(WIDTH // 2, y_pos + i * 50))
-            screen.blit(credit_text, credit_rect)
+        for credit in credits:
+            credit_text = credit_font.render(credit, True, (200, 200, 255))
+            screen.blit(credit_text, (WIDTH//2 - credit_text.get_width()//2, y_pos))
+            y_pos += 40
         
-        y_pos += 200
+        y_pos += 80
         
         # Description
-        desc_font = pygame.font.Font('freesansbold.ttf', 18)
         descriptions = [
             "A modern recreation of the classic arcade game",
             "Built with Python and Pygame",
             "Features multiple levels, high scores, and smooth gameplay"
         ]
         
-        for i, desc in enumerate(descriptions):
-            desc_text = desc_font.render(desc, True, (150, 170, 200))
-            desc_rect = desc_text.get_rect(center=(WIDTH // 2, y_pos + i * 35))
-            screen.blit(desc_text, desc_rect)
+        for desc in descriptions:
+            desc_text = desc_font.render(desc, True, (180, 180, 200))
+            screen.blit(desc_text, (WIDTH//2 - desc_text.get_width()//2, y_pos))
+            y_pos += 35
         
         # Back button
         back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 750, 200, 50)
         mouse_pos = pygame.mouse.get_pos()
         is_hover = back_btn_rect.collidepoint(mouse_pos)
         
-        btn_color = (50, 180, 220) if is_hover else (30, 120, 180)
-        pygame.draw.rect(screen, btn_color, back_btn_rect, border_radius=8)
-        pygame.draw.rect(screen, (100, 220, 255), back_btn_rect, 3, border_radius=8)
-        
-        back_text = font.render("BACK", True, WHITE)
+        if is_hover:
+            self.draw_cyber_panel(back_btn_rect, color=CYBER_YELLOW, alpha=255, border_color=WHITE)
+            text_color = BLACK
+        else:
+            self.draw_cyber_panel(back_btn_rect, color=(20, 20, 30), border_color=CYBER_PINK)
+            text_color = WHITE
+            
+        back_text = font.render("BACK", True, text_color)
         back_rect = back_text.get_rect(center=back_btn_rect.center)
         screen.blit(back_text, back_rect)
         
         pygame.display.flip()
 
     def draw_levels(self):
-        screen.fill((10, 10, 15))
+        self.draw_background()
         
         # Title
-        title_font = pygame.font.Font('freesansbold.ttf', 50)
-        title = title_font.render("SELECT LEVEL", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 100))
-        screen.blit(title, title_rect)
+        self.draw_text_centered("SELECT LEVEL", header_font, CYBER_YELLOW, 100)
         
         # Level Buttons
         levels = [
@@ -289,16 +309,14 @@ class GameManager:
             btn_rect = pygame.Rect(WIDTH // 2 - 200, lvl["y"], 400, 80)
             is_hover = btn_rect.collidepoint(mouse_pos)
             
-            # Button style
             if is_hover:
-                pygame.draw.rect(screen, (50, 100, 180), btn_rect, border_radius=15)
-                pygame.draw.rect(screen, (80, 150, 255), btn_rect, 3, border_radius=15)
+                self.draw_cyber_panel(btn_rect, color=CYBER_BLUE, alpha=255, border_color=WHITE)
+                text_color = BLACK
             else:
-                pygame.draw.rect(screen, (30, 50, 80), btn_rect, border_radius=15)
-                pygame.draw.rect(screen, (50, 80, 120), btn_rect, 3, border_radius=15)
+                self.draw_cyber_panel(btn_rect, color=(20, 20, 30), border_color=CYBER_YELLOW)
+                text_color = CYBER_YELLOW
                 
-            text_font = pygame.font.Font('freesansbold.ttf', 30)
-            text = text_font.render(lvl["text"], True, 'white')
+            text = sub_font.render(lvl["text"], True, text_color)
             text_rect = text.get_rect(center=btn_rect.center)
             screen.blit(text, text_rect)
             
@@ -306,147 +324,101 @@ class GameManager:
         back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 700, 200, 50)
         is_hover = back_btn_rect.collidepoint(mouse_pos)
         
-        btn_color = (50, 180, 220) if is_hover else (30, 120, 180)
-        pygame.draw.rect(screen, btn_color, back_btn_rect, border_radius=8)
-        pygame.draw.rect(screen, (100, 220, 255), back_btn_rect, 3, border_radius=8)
-        
-        back_text = font.render("BACK", True, WHITE)
+        if is_hover:
+            self.draw_cyber_panel(back_btn_rect, color=CYBER_YELLOW, alpha=255, border_color=WHITE)
+            text_color = BLACK
+        else:
+            self.draw_cyber_panel(back_btn_rect, color=(20, 20, 30), border_color=CYBER_PINK)
+            text_color = WHITE
+            
+        back_text = font.render("BACK", True, text_color)
         back_rect = back_text.get_rect(center=back_btn_rect.center)
         screen.blit(back_text, back_rect)
         
         pygame.display.flip()
 
     def draw_instructions(self):
-        screen.fill((10, 10, 15))
+        self.draw_background()
         
         # Title
-        title_font = pygame.font.Font('freesansbold.ttf', 48)
-        title = title_font.render("HOW TO PLAY", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 60))
-        screen.blit(title, title_rect)
+        self.draw_text_centered("HOW TO PLAY", header_font, CYBER_YELLOW, 60)
         
-        # Decorative line
-        pygame.draw.line(screen, (70, 120, 220), (WIDTH // 2 - 150, 100), (WIDTH // 2 + 150, 100), 3)
+        # Instructions Panel
+        panel_rect = pygame.Rect(50, 120, WIDTH - 100, 700)
+        self.draw_cyber_panel(panel_rect, border_color=CYBER_BLUE)
         
         # Instructions sections
-        section_font = pygame.font.Font('freesansbold.ttf', 24)
-        inst_font = pygame.font.Font('freesansbold.ttf', 18)
+        y_pos = 150
         
-        y_pos = 140
-        
-        # OBJECTIVE Section
-        objective_title = section_font.render("OBJECTIVE", True, (100, 200, 255))
-        screen.blit(objective_title, (100, y_pos))
-        y_pos += 35
-        
-        objective_text = [
-            "• Eat all the dots to complete each level",
-            "• Avoid the ghosts or you'll lose a life",
-            "• Clear all levels to win the game"
+        sections = [
+            ("OBJECTIVE", [
+                "• Eat all the dots to complete each level",
+                "• Avoid the ghosts or you'll lose a life",
+                "• Clear all levels to win the game"
+            ]),
+            ("CONTROLS", [
+                "• Arrow Keys: Move Pac-Man (Up, Down, Left, Right)",
+                "• ESC: Pause or return to menu",
+                "• Mouse Click: Navigate menus"
+            ]),
+            ("POWER-UPS", [
+                "• Small Dots: 10 points each",
+                "• Power Pellets (Big Dots): 50 points + Ghost Hunt Mode",
+                "• During Power Mode: Eat blue ghosts for bonus points!"
+            ]),
+            ("GHOSTS", [
+                "• Red Ghost (Blinky): Chases you directly",
+                "• Pink Ghost (Pinky): Tries to ambush you",
+                "• Blue Ghost (Inky): Unpredictable movement",
+                "• Orange Ghost (Clyde): Patrols and chases"
+            ])
         ]
-        for text in objective_text:
-            line = inst_font.render(text, True, (200, 210, 230))
-            screen.blit(line, (120, y_pos))
-            y_pos += 28
         
-        y_pos += 15
-        
-        # CONTROLS Section
-        controls_title = section_font.render("CONTROLS", True, (100, 200, 255))
-        screen.blit(controls_title, (100, y_pos))
-        y_pos += 35
-        
-        controls_text = [
-            "• Arrow Keys: Move Pac-Man (Up, Down, Left, Right)",
-            "• ESC: Pause or return to menu",
-            "• Mouse Click: Navigate menus"
-        ]
-        for text in controls_text:
-            line = inst_font.render(text, True, (200, 210, 230))
-            screen.blit(line, (120, y_pos))
-            y_pos += 28
-        
-        y_pos += 15
-        
-        # POWER-UPS Section
-        powerup_title = section_font.render("POWER-UPS", True, (100, 200, 255))
-        screen.blit(powerup_title, (100, y_pos))
-        y_pos += 35
-        
-        powerup_text = [
-            "• Small Dots: 10 points each",
-            "• Power Pellets (Big Dots): 50 points + Ghost Hunt Mode",
-            "• During Power Mode: Eat blue ghosts for bonus points!"
-        ]
-        for text in powerup_text:
-            line = inst_font.render(text, True, (200, 210, 230))
-            screen.blit(line, (120, y_pos))
-            y_pos += 28
-        
-        y_pos += 15
-        
-        # GHOSTS Section
-        ghosts_title = section_font.render("GHOSTS", True, (100, 200, 255))
-        screen.blit(ghosts_title, (100, y_pos))
-        y_pos += 35
-        
-        ghosts_text = [
-            "• Red Ghost (Blinky): Chases you directly",
-            "• Pink Ghost (Pinky): Tries to ambush you",
-            "• Blue Ghost (Inky): Unpredictable movement",
-            "• Orange Ghost (Clyde): Patrols and chases"
-        ]
-        for text in ghosts_text:
-            line = inst_font.render(text, True, (200, 210, 230))
-            screen.blit(line, (120, y_pos))
-            y_pos += 28
-        
-        y_pos += 15
-        
-        # LEVELS Section
-        levels_title = section_font.render("LEVELS", True, (100, 200, 255))
-        screen.blit(levels_title, (100, y_pos))
-        y_pos += 35
-        
-        levels_text = [
-            "• Each level increases speed by 15%",
-            "• Different maze layouts every level",
-            "• You start with 3 lives - use them wisely!"
-        ]
-        for text in levels_text:
-            line = inst_font.render(text, True, (200, 210, 230))
-            screen.blit(line, (120, y_pos))
-            y_pos += 28
+        for title, lines in sections:
+            # Section Title
+            title_surf = section_font.render(title, True, CYBER_PINK)
+            screen.blit(title_surf, (100, y_pos))
+            y_pos += 35
+            
+            # Lines
+            for line in lines:
+                line_surf = inst_font.render(line, True, (200, 200, 220))
+                screen.blit(line_surf, (120, y_pos))
+                y_pos += 25
+            y_pos += 20
         
         # Back button
         back_btn_rect = pygame.Rect(WIDTH // 2 - 100, 850, 200, 50)
         mouse_pos = pygame.mouse.get_pos()
         is_hover = back_btn_rect.collidepoint(mouse_pos)
         
-        btn_color = (50, 180, 220) if is_hover else (30, 120, 180)
-        pygame.draw.rect(screen, btn_color, back_btn_rect, border_radius=8)
-        pygame.draw.rect(screen, (100, 220, 255), back_btn_rect, 3, border_radius=8)
-        
-        back_text = font.render("BACK", True, WHITE)
+        if is_hover:
+            self.draw_cyber_panel(back_btn_rect, color=CYBER_YELLOW, alpha=255, border_color=WHITE)
+            text_color = BLACK
+        else:
+            self.draw_cyber_panel(back_btn_rect, color=(20, 20, 30), border_color=CYBER_PINK)
+            text_color = WHITE
+            
+        back_text = font.render("BACK", True, text_color)
         back_rect = back_text.get_rect(center=back_btn_rect.center)
         screen.blit(back_text, back_rect)
         
         pygame.display.flip()
 
     def draw_high_scores(self):
-        screen.fill((20, 40, 80))
+        self.draw_background()
         
         # Title
-        title_font = pygame.font.Font('freesansbold.ttf', 50)
-        title = title_font.render("HIGH SCORES", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 80))
-        screen.blit(title, title_rect)
+        self.draw_text_centered("HIGH SCORES", header_font, CYBER_YELLOW, 80)
         
         # Sort scores
         self.high_scores.sort(key=lambda x: x['score'], reverse=True)
         
+        # Score Panel
+        panel_rect = pygame.Rect(WIDTH // 2 - 300, 150, 600, 450)
+        self.draw_cyber_panel(panel_rect, border_color=CYBER_BLUE)
+        
         # Score entries
-        score_font = pygame.font.Font('freesansbold.ttf', 28)
         y_start = 200
         
         if len(self.high_scores) == 0:
@@ -456,17 +428,17 @@ class GameManager:
         else:
             for i, entry in enumerate(self.high_scores[:5]):
                 # Rank
-                rank_colors = [(255, 215, 0), (192, 192, 192), (205, 127, 50), (100, 200, 255), (100, 200, 255)]
+                rank_colors = [CYBER_YELLOW, (192, 192, 192), (205, 127, 50), CYBER_BLUE, CYBER_BLUE]
                 rank_text = score_font.render(f"#{i+1}", True, rank_colors[i])
-                screen.blit(rank_text, (200, y_start + i * 70))
+                screen.blit(rank_text, (WIDTH // 2 - 250, y_start + i * 70))
                 
                 # Name
                 name_text = score_font.render(entry['name'], True, WHITE)
-                screen.blit(name_text, (300, y_start + i * 70))
+                screen.blit(name_text, (WIDTH // 2 - 150, y_start + i * 70))
                 
                 # Score
-                score_text = score_font.render(str(entry['score']), True, (100, 255, 150))
-                score_rect = score_text.get_rect(right=700, top=y_start + i * 70)
+                score_text = score_font.render(str(entry['score']), True, CYBER_PINK)
+                score_rect = score_text.get_rect(right=WIDTH // 2 + 250, top=y_start + i * 70)
                 screen.blit(score_text, score_rect)
         
         # Back button
@@ -474,49 +446,49 @@ class GameManager:
         mouse_pos = pygame.mouse.get_pos()
         is_hover = back_btn_rect.collidepoint(mouse_pos)
         
-        btn_color = (50, 180, 220) if is_hover else (30, 120, 180)
-        pygame.draw.rect(screen, btn_color, back_btn_rect, border_radius=8)
-        pygame.draw.rect(screen, (100, 220, 255), back_btn_rect, 3, border_radius=8)
-        
-        back_text = font.render("BACK", True, WHITE)
+        if is_hover:
+            self.draw_cyber_panel(back_btn_rect, color=CYBER_YELLOW, alpha=255, border_color=WHITE)
+            text_color = BLACK
+        else:
+            self.draw_cyber_panel(back_btn_rect, color=(20, 20, 30), border_color=CYBER_PINK)
+            text_color = WHITE
+            
+        back_text = font.render("BACK", True, text_color)
         back_rect = back_text.get_rect(center=back_btn_rect.center)
         screen.blit(back_text, back_rect)
         
         pygame.display.flip()
 
     def draw_new_highscore(self):
-        screen.fill((20, 40, 80))
+        self.draw_background()
         
         # Celebration title
-        title_font = pygame.font.Font('freesansbold.ttf', 50)
-        title = title_font.render("NEW HIGH SCORE!", True, YELLOW)
-        title_rect = title.get_rect(center=(WIDTH // 2, 150))
-        screen.blit(title, title_rect)
+        self.draw_text_centered("NEW HIGH SCORE!", header_font, CYBER_YELLOW, 150)
+        
+        # Panel
+        panel_rect = pygame.Rect(WIDTH // 2 - 300, 220, 600, 400)
+        self.draw_cyber_panel(panel_rect, border_color=CYBER_PINK)
         
         # Score display
-        score_font = pygame.font.Font('freesansbold.ttf', 40)
-        score_text = score_font.render(f"Score: {self.current_score}", True, (100, 255, 150))
-        score_rect = score_text.get_rect(center=(WIDTH // 2, 250))
+        score_text = large_score_font.render(f"Score: {self.current_score}", True, CYBER_BLUE)
+        score_rect = score_text.get_rect(center=(WIDTH // 2, 280))
         screen.blit(score_text, score_rect)
         
         # Name entry prompt
-        prompt_font = pygame.font.Font('freesansbold.ttf', 28)
         prompt = prompt_font.render("Enter Your Name (Max 10 chars):", True, WHITE)
-        prompt_rect = prompt.get_rect(center=(WIDTH // 2, 350))
+        prompt_rect = prompt.get_rect(center=(WIDTH // 2, 380))
         screen.blit(prompt, prompt_rect)
         
         # Name input box
-        input_box = pygame.Rect(WIDTH // 2 - 150, 420, 300, 60)
-        pygame.draw.rect(screen, (30, 120, 180), input_box, border_radius=8)
-        pygame.draw.rect(screen, (100, 220, 255), input_box, 3, border_radius=8)
+        input_box = pygame.Rect(WIDTH // 2 - 150, 430, 300, 70)
+        self.draw_cyber_panel(input_box, color=(0, 0, 0), border_color=CYBER_YELLOW)
         
-        name_font = pygame.font.Font('freesansbold.ttf', 45)
         # Display name with blinking cursor effect
         display_name = self.input_name
         if pygame.time.get_ticks() % 1000 < 500:
             display_name += "_"
         
-        name_text = name_font.render(display_name, True, YELLOW)
+        name_text = input_font.render(display_name, True, CYBER_YELLOW)
         name_rect = name_text.get_rect(center=input_box.center)
         screen.blit(name_text, name_rect)
         
@@ -555,8 +527,8 @@ class GameManager:
             
             # Show Level Screen only for levels 2+
             if self.current_level > 1:
-                screen.fill(BLACK)
-                self.draw_text_centered(f"LEVEL {self.current_level}", font, YELLOW, HEIGHT // 2)
+                self.draw_background()
+                self.draw_text_centered(f"LEVEL {self.current_level}", level_font, CYBER_YELLOW, HEIGHT // 2)
                 pygame.display.flip()
                 pygame.time.delay(2000)
             
@@ -571,15 +543,17 @@ class GameManager:
                 self.running = False
                 return
             elif result == "GAMEOVER":
-                screen.fill(BLACK)
-                self.draw_text_centered("GAME OVER", font, RED, HEIGHT // 2)
-                pygame.display.flip()
-                pygame.time.delay(2000)
+                # Pacman.py handles the game over screen now
                 self.check_high_score()
                 return
             elif result == "VICTORY":
                 self.current_level += 1
                 # Loop continues to next level
+            elif result == "RESTART":
+                # Loop continues, restarting the level
+                pass
+            elif result == "MENU":
+                return
             else:
                 # Should not happen
                 return
@@ -611,15 +585,15 @@ class GameManager:
                         mouse_pos = pygame.mouse.get_pos()
                         # Check which button was clicked
                         buttons = [
-                            {"y": 340, "action": "start"},
-                            {"y": 425, "action": "levels"},
-                            {"y": 510, "action": "instructions"},
-                            {"y": 595, "action": "highscores"},
-                            {"y": 680, "action": "about"},
-                            {"y": 765, "action": "quit"}
+                            {"y": 300, "action": "start"},
+                            {"y": 390, "action": "levels"},
+                            {"y": 480, "action": "instructions"},
+                            {"y": 570, "action": "highscores"},
+                            {"y": 660, "action": "about"},
+                            {"y": 750, "action": "quit"}
                         ]
                         for btn in buttons:
-                            btn_rect = pygame.Rect(WIDTH // 2 - 190, btn["y"], 380, 65)
+                            btn_rect = pygame.Rect(WIDTH // 2 - 200, btn["y"], 400, 70)
                             if btn_rect.collidepoint(mouse_pos):
                                 if btn["action"] == "start":
                                     self.start_game()

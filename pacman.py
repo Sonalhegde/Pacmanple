@@ -3,6 +3,7 @@ import copy
 from board import boards, all_boards
 import pygame
 import math
+import random
 
 pygame.init()
 
@@ -12,6 +13,7 @@ screen = pygame.display.set_mode([WIDTH, HEIGHT])
 timer = pygame.time.Clock()
 fps = 60
 font = pygame.font.Font('freesansbold.ttf', 20)
+gameover_font = pygame.font.Font('freesansbold.ttf', 40)
 level = copy.deepcopy(boards)
 color = 'blue'
 PI = math.pi
@@ -672,35 +674,75 @@ class Ghost:
 
 
 def draw_misc():
-    # Colorful Score (Top Left)
-    score_label = font.render('Score:', True, 'white')
-    score_value = font.render(f'{score}', True, (0, 255, 255)) # Cyan score
-    screen.blit(score_label, (10, 10))
-    screen.blit(score_value, (80, 10))
+    # HUD Background Panel
+    pygame.draw.rect(screen, (0, 0, 0), [0, 0, WIDTH, 50])
+    pygame.draw.line(screen, (0, 240, 255), (0, 50), (WIDTH, 50), 3) # Cyber Blue
     
-    # Lives (Center Top)
-    for i in range(lives):
-        screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (WIDTH // 2 - 45 + i * 40, 10))
+    # Score (Left)
+    score_text = font.render(f'SCORE: {score}', True, (252, 238, 10)) # Cyber Yellow
+    screen.blit(score_text, (20, 15))
     
-    # Level Indicator (Below Score)
+    # Level (Center-Left)
     try:
-        level_text = font.render(f'Lvl: {current_level_display}', True, (255, 255, 0)) # Yellow
-        screen.blit(level_text, (10, 40))
+        level_text = font.render(f'LEVEL: {current_level_display}', True, (0, 240, 255)) # Cyber Blue
+        screen.blit(level_text, (250, 15))
     except NameError:
-        pass 
+        pass
         
-    if powerup:
-        pygame.draw.circle(screen, 'blue', (140, 930), 15)
+    # Lives (Right)
+    lives_text = font.render('LIVES:', True, (255, 0, 60)) # Cyber Pink
+    screen.blit(lives_text, (650, 15))
+    for i in range(lives):
+        screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (730 + i * 40, 10))
+        
+    # Game Over / Victory Screens
     if game_over:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('Game over! Space bar to restart!', True, 'red')
-        screen.blit(gameover_text, (100, 300))
+        # Semi-transparent overlay
+        s = pygame.Surface((WIDTH, HEIGHT))
+        s.set_alpha(220)
+        s.fill((5, 5, 10))
+        screen.blit(s, (0, 0))
+        
+        # Game Over Box - Cyber Style
+        box_rect = pygame.Rect(200, 300, 500, 200)
+        pygame.draw.rect(screen, (0, 0, 0), box_rect)
+        pygame.draw.rect(screen, (255, 0, 60), box_rect, 4) # Pink Border
+        
+        # Corner accents
+        pygame.draw.line(screen, (255, 0, 60), (box_rect.left, box_rect.top), (box_rect.left + 40, box_rect.top), 8)
+        pygame.draw.line(screen, (255, 0, 60), (box_rect.left, box_rect.top), (box_rect.left, box_rect.top + 40), 8)
+        pygame.draw.line(screen, (255, 0, 60), (box_rect.right - 40, box_rect.bottom), (box_rect.right, box_rect.bottom), 8)
+        pygame.draw.line(screen, (255, 0, 60), (box_rect.right, box_rect.bottom - 40), (box_rect.right, box_rect.bottom), 8)
+        
+        gameover_text = gameover_font.render('GAME OVER', True, (255, 0, 60))
+        restart_text = font.render('Press Space to Restart', True, (255, 255, 255))
+        
+        screen.blit(gameover_text, (WIDTH//2 - gameover_text.get_width()//2, 350))
+        screen.blit(restart_text, (WIDTH//2 - restart_text.get_width()//2, 420))
+        
     if game_won:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('Victory! Space bar to restart!', True, 'green')
-        screen.blit(gameover_text, (100, 300))
+        # Semi-transparent overlay
+        s = pygame.Surface((WIDTH, HEIGHT))
+        s.set_alpha(220)
+        s.fill((5, 5, 10))
+        screen.blit(s, (0, 0))
+        
+        # Victory Box - Cyber Style
+        box_rect = pygame.Rect(200, 300, 500, 200)
+        pygame.draw.rect(screen, (0, 0, 0), box_rect)
+        pygame.draw.rect(screen, (0, 240, 255), box_rect, 4) # Blue Border
+        
+        # Corner accents
+        pygame.draw.line(screen, (0, 240, 255), (box_rect.left, box_rect.top), (box_rect.left + 40, box_rect.top), 8)
+        pygame.draw.line(screen, (0, 240, 255), (box_rect.left, box_rect.top), (box_rect.left, box_rect.top + 40), 8)
+        pygame.draw.line(screen, (0, 240, 255), (box_rect.right - 40, box_rect.bottom), (box_rect.right, box_rect.bottom), 8)
+        pygame.draw.line(screen, (0, 240, 255), (box_rect.right, box_rect.bottom - 40), (box_rect.right, box_rect.bottom), 8)
+        
+        victory_text = gameover_font.render('VICTORY!', True, (0, 240, 255))
+        restart_text = font.render('Press Space to Advance', True, (255, 255, 255))
+        
+        screen.blit(victory_text, (WIDTH//2 - victory_text.get_width()//2, 350))
+        screen.blit(restart_text, (WIDTH//2 - restart_text.get_width()//2, 420))
 
 
 def check_collisions(scor, power, power_count, eaten_ghosts, center_x, center_y):
@@ -905,6 +947,66 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
     return [blink_target, ink_target, pink_target, clyd_target]
 
 
+def randomize_bonuses(level_grid):
+    # Find all positions of small dots (1) and power pellets (2)
+    small_dots = []
+    power_pellets = []
+    
+    for r in range(len(level_grid)):
+        for c in range(len(level_grid[r])):
+            if level_grid[r][c] == 1:
+                small_dots.append((r, c))
+            elif level_grid[r][c] == 2:
+                power_pellets.append((r, c))
+    
+    # Randomly swap power pellets with small dots
+    # We want to keep the number of power pellets constant, just move them
+    # But we can also just pick random positions from the combined list of valid spots
+    
+    # Let's just shuffle the power pellets into new positions from the available dot spots
+    # First, turn existing power pellets into small dots
+    for r, c in power_pellets:
+        level_grid[r][c] = 1
+        small_dots.append((r, c))
+        
+    # Now pick random spots for power pellets
+    # Now pick random spots for power pellets with minimum distance
+    if small_dots:
+        chosen_spots = []
+        min_distance = 10  # Minimum tile distance between power pellets
+        
+        for _ in range(len(power_pellets)):
+            # Try to find a spot that is far enough from existing chosen spots
+            valid_spot = None
+            random.shuffle(small_dots)
+            
+            for spot in small_dots:
+                if spot in chosen_spots:
+                    continue
+                    
+                # Check distance to all currently chosen spots
+                too_close = False
+                for existing in chosen_spots:
+                    dist = math.sqrt((spot[0] - existing[0])**2 + (spot[1] - existing[1])**2)
+                    if dist < min_distance:
+                        too_close = True
+                        break
+                
+                if not too_close:
+                    valid_spot = spot
+                    break
+            
+            # If we couldn't find a spot far enough (e.g. map too small), just pick a random available one
+            if valid_spot is None:
+                remaining = [s for s in small_dots if s not in chosen_spots]
+                if remaining:
+                    valid_spot = random.choice(remaining)
+            
+            if valid_spot:
+                chosen_spots.append(valid_spot)
+                level_grid[valid_spot[0]][valid_spot[1]] = 2
+
+
 def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
     global counter, flicker, power_counter, powerup, eaten_ghost, startup_counter, moving, \
            player_x, player_y, direction, direction_command, blinky_x, blinky_y, blinky_direction, \
@@ -919,6 +1021,9 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
         level = copy.deepcopy(all_boards[board_index])
     else:
         level = copy.deepcopy(all_boards[board_index % len(all_boards)])
+        
+    # Randomize bonus positions
+    randomize_bonuses(level)
 
     paused = False
     pause_font = pygame.font.Font('freesansbold.ttf', 20)
@@ -1005,27 +1110,42 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
             
             # Buttons Style
             btn_width = 250
-            btn_height = 60
-            resume_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, HEIGHT // 2 - 30, btn_width, btn_height)
-            quit_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, HEIGHT // 2 + 50, btn_width, btn_height)
+            btn_height = 50
+            spacing = 20
+            start_y = HEIGHT // 2 - 60
+            
+            resume_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, start_y, btn_width, btn_height)
+            restart_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, start_y + btn_height + spacing, btn_width, btn_height)
+            menu_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, start_y + (btn_height + spacing) * 2, btn_width, btn_height)
+            quit_rect = pygame.Rect(WIDTH // 2 - btn_width // 2, start_y + (btn_height + spacing) * 3, btn_width, btn_height)
             
             mouse_pos = pygame.mouse.get_pos()
             
-            # Resume Button
-            resume_hover = resume_rect.collidepoint(mouse_pos)
-            pygame.draw.rect(screen, (0, 200, 255) if resume_hover else (0, 150, 200), resume_rect, border_radius=8) # Cyan
-            pygame.draw.rect(screen, (255, 150, 0), resume_rect, 4, border_radius=8) # Orange border
-            resume_txt = font.render("RESUME", True, 'white')
-            resume_txt_rect = resume_txt.get_rect(center=resume_rect.center)
-            screen.blit(resume_txt, resume_txt_rect)
-            
-            # Quit Button
-            quit_hover = quit_rect.collidepoint(mouse_pos)
-            pygame.draw.rect(screen, (0, 200, 255) if quit_hover else (0, 150, 200), quit_rect, border_radius=8) # Cyan
-            pygame.draw.rect(screen, (255, 150, 0), quit_rect, 4, border_radius=8) # Orange border
-            quit_txt = font.render("QUIT", True, 'white')
-            quit_txt_rect = quit_txt.get_rect(center=quit_rect.center)
-            screen.blit(quit_txt, quit_txt_rect)
+            # Helper to draw cyber button
+            def draw_cyber_btn(rect, text, hover):
+                color = (252, 238, 10) if hover else (20, 20, 30) # Cyber Yellow / Dark
+                border_color = (255, 255, 255) if hover else (0, 240, 255) # White / Cyber Blue
+                text_color = (0, 0, 0) if hover else (0, 240, 255) # Black / Cyber Blue
+                
+                # Chamfered corners
+                cut = 10
+                x, y, w, h = rect.x, rect.y, rect.width, rect.height
+                points = [
+                    (x + cut, y), (x + w, y), (x + w, y + h - cut),
+                    (x + w - cut, y + h), (x, y + h), (x, y + cut)
+                ]
+                
+                pygame.draw.polygon(screen, color, points)
+                pygame.draw.polygon(screen, border_color, points, 2)
+                
+                txt_surf = font.render(text, True, text_color)
+                txt_rect = txt_surf.get_rect(center=rect.center)
+                screen.blit(txt_surf, txt_rect)
+
+            draw_cyber_btn(resume_rect, "RESUME", resume_rect.collidepoint(mouse_pos))
+            draw_cyber_btn(restart_rect, "RESTART", restart_rect.collidepoint(mouse_pos))
+            draw_cyber_btn(menu_rect, "MENU", menu_rect.collidepoint(mouse_pos))
+            draw_cyber_btn(quit_rect, "QUIT", quit_rect.collidepoint(mouse_pos))
             
             pygame.display.flip()
             
@@ -1040,6 +1160,10 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                         paused = not paused
                     elif resume_rect.collidepoint(event.pos):
                         paused = False
+                    elif restart_rect.collidepoint(event.pos):
+                        return "RESTART"
+                    elif menu_rect.collidepoint(event.pos):
+                        return "MENU"
                     elif quit_rect.collidepoint(event.pos):
                         return "QUIT"
             continue
@@ -1054,8 +1178,8 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 break  # Exit early once we know there are dots left
         
         if game_won:
-            # Return immediately on win to let manager handle level progression
-            return "VICTORY"
+            # Let the loop continue to show victory screen
+            pass
 
         targets = get_targets(blinky_x, blinky_y, inky_x, inky_y, pinky_x, pinky_y, clyde_x, clyde_y)
 
@@ -1112,7 +1236,6 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                     game_over = True
                     moving = False
                     startup_counter = 0
-                    return "GAMEOVER"
         if powerup and player_circle.colliderect(blinky.rect) and eaten_ghost[0] and not blinky.dead:
             if lives > 0:
                 powerup = False
@@ -1144,7 +1267,6 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 game_over = True
                 moving = False
                 startup_counter = 0
-                return "GAMEOVER"
         if powerup and player_circle.colliderect(inky.rect) and eaten_ghost[1] and not inky.dead:
             if lives > 0:
                 powerup = False
@@ -1176,7 +1298,6 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 game_over = True
                 moving = False
                 startup_counter = 0
-                return "GAMEOVER"
         if powerup and player_circle.colliderect(pinky.rect) and eaten_ghost[2] and not pinky.dead:
             if lives > 0:
                 powerup = False
@@ -1208,7 +1329,6 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 game_over = True
                 moving = False
                 startup_counter = 0
-                return "GAMEOVER"
         if powerup and player_circle.colliderect(clyde.rect) and eaten_ghost[3] and not clyde.dead:
             if lives > 0:
                 powerup = False
@@ -1240,7 +1360,6 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 game_over = True
                 moving = False
                 startup_counter = 0
-                return "GAMEOVER"
         if powerup and player_circle.colliderect(blinky.rect) and not blinky.dead and not eaten_ghost[0]:
             blinky_dead = True
             eaten_ghost[0] = True
@@ -1272,8 +1391,19 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
                 if event.key == pygame.K_DOWN:
                     direction_command = 3
                 if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
-                    # Toggle pause
-                    paused = not paused
+                    if game_over:
+                        if event.key == pygame.K_SPACE:
+                            return "GAMEOVER"
+                        else:
+                            return "QUIT"
+                    elif game_won:
+                        if event.key == pygame.K_SPACE:
+                            return "VICTORY"
+                        else:
+                            return "QUIT"
+                    # Toggle pause if game is running normally
+                    elif not game_over and not game_won:
+                        paused = not paused
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Check if pause button was clicked
