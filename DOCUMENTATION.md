@@ -1058,4 +1058,4 @@ For questions, issues, or suggestions:
 ---
 
 **Last Updated:** November 27, 2024
-**Documentation Version:** 1.0
+*
