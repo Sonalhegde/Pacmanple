@@ -186,7 +186,7 @@ class GameManager:
         screen.blit(title_surf, (WIDTH//2 - 200, 100))
         
         # Subtitle
-        sub_text = sub_font.render("CYBERPUNK EDITION", True, CYBER_BLUE)
+        sub_text = sub_font.render("CLASSIC EDITION", True, CYBER_BLUE)
         screen.blit(sub_text, (WIDTH//2 - sub_text.get_width()//2, 200))
 
         # Menu Buttons

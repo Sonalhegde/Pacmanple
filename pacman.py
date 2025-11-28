@@ -674,26 +674,53 @@ class Ghost:
 
 
 def draw_misc():
-    # HUD Background Panel
-    pygame.draw.rect(screen, (0, 0, 0), [0, 0, WIDTH, 50])
-    pygame.draw.line(screen, (0, 240, 255), (0, 50), (WIDTH, 50), 3) # Cyber Blue
+    # Cyberpunk HUD with gradient background (50px height to match board offset)
+    # Create gradient background for HUD
+    for y in range(50):
+        alpha = int(255 - (y * 2.5))
+        color_r = int(10 + (y * 0.6))
+        color_g = int(10 + (y * 0.4))
+        color_b = int(30 + (y * 1.0))
+        pygame.draw.line(screen, (color_r, color_g, color_b), (0, y), (WIDTH, y), 1)
     
-    # Score (Left)
-    score_text = font.render(f'SCORE: {score}', True, (252, 238, 10)) # Cyber Yellow
-    screen.blit(score_text, (20, 15))
+    # Top border with gradient
+    pygame.draw.line(screen, (252, 238, 10), (0, 48), (WIDTH, 48), 2) # Cyber Yellow
+    pygame.draw.line(screen, (0, 240, 255), (0, 50), (WIDTH, 50), 2) # Cyber Blue
     
-    # Level (Center-Left)
+    # Game Title (Left)
+    title_font = pygame.font.Font('freesansbold.ttf', 20)
+    title_text = title_font.render('PACMAN', True, (252, 238, 10)) # Cyber Yellow
+    edition_text = pygame.font.Font('freesansbold.ttf', 10).render('CLASSIC EDITION', True, (0, 240, 255))
+    screen.blit(title_text, (12, 6))
+    screen.blit(edition_text, (12, 30))
+    
+    # Score (Left-Center)
+    score_label = pygame.font.Font('freesansbold.ttf', 12).render('SCORE', True, (150, 150, 150))
+    score_value = pygame.font.Font('freesansbold.ttf', 18).render(str(score), True, (252, 238, 10))
+    screen.blit(score_label, (160, 8))
+    screen.blit(score_value, (160, 24))
+    
+    # Lives (Center) - Moved from right to avoid pause button clash
+    lives_label = pygame.font.Font('freesansbold.ttf', 12).render('LIVES', True, (150, 150, 150))
+    screen.blit(lives_label, (WIDTH // 2 - 35, 8))
+    for i in range(lives):
+        screen.blit(pygame.transform.scale(player_images[0], (24, 24)), (WIDTH // 2 - 42 + i * 30, 24))
+    
+    # Level (Right-Center)
     try:
-        level_text = font.render(f'LEVEL: {current_level_display}', True, (0, 240, 255)) # Cyber Blue
-        screen.blit(level_text, (250, 15))
+        level_label = pygame.font.Font('freesansbold.ttf', 12).render('LEVEL', True, (150, 150, 150))
+        level_value = pygame.font.Font('freesansbold.ttf', 18).render(str(current_level_display), True, (0, 240, 255))
+        screen.blit(level_label, (WIDTH - 160, 8))
+        screen.blit(level_value, (WIDTH - 160, 24))
     except NameError:
         pass
+    
+    # Decorative corner accents
+    pygame.draw.line(screen, (255, 0, 60), (0, 0), (25, 0), 2)
+    pygame.draw.line(screen, (255, 0, 60), (0, 0), (0, 25), 2)
+    pygame.draw.line(screen, (0, 240, 255), (WIDTH - 25, 0), (WIDTH, 0), 2)
+    pygame.draw.line(screen, (0, 240, 255), (WIDTH, 0), (WIDTH, 25), 2)
         
-    # Lives (Right)
-    lives_text = font.render('LIVES:', True, (255, 0, 60)) # Cyber Pink
-    screen.blit(lives_text, (650, 15))
-    for i in range(lives):
-        screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (730 + i * 40, 10))
         
     # Game Over / Victory Screens
     if game_over:
@@ -839,9 +866,9 @@ def check_position(centerx, centery):
                     turns[0] = True
         if direction == 0 or direction == 1:
             if 10 <= centerx % num2 <= 20:
-                if level[int((centery + num1) // num1)][int(centerx // num2)] < 3:
+                if level[int((centery + num3) // num1)][int(centerx // num2)] < 3:
                     turns[3] = True
-                if level[int((centery - num1) // num1)][int(centerx // num2)] < 3:
+                if level[int((centery - num3) // num1)][int(centerx // num2)] < 3:
                     turns[2] = True
             if 10 <= centery % num1 <= 20:
                 if level[int(centery // num1)][int((centerx - num3) // num2)] < 3:
@@ -1184,7 +1211,8 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
         targets = get_targets(blinky_x, blinky_y, inky_x, inky_y, pinky_x, pinky_y, clyde_x, clyde_y)
 
         turns_allowed = check_position(center_x, center_y)
-        if moving:
+        # Stop movement if game is over or won
+        if moving and not game_over and not game_won:
             player_x, player_y = move_player(player_x, player_y)
             if not blinky_dead and not blinky.in_box:
                 blinky_x, blinky_y, blinky_direction = blinky.move_blinky()
