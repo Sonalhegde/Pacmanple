@@ -1075,6 +1075,8 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
         if startup_counter < 180 and not game_over and not game_won:
             moving = False
             startup_counter += 1
+        elif game_over or game_won:
+            moving = False
         else:
             moving = True
 
@@ -1410,14 +1412,15 @@ def play_level(speed_mult=1.0, extra_ghosts=0, board_index=0, level_num=1):
             if event.type == pygame.QUIT:
                 return "QUIT"
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    direction_command = 0
-                if event.key == pygame.K_LEFT:
-                    direction_command = 1
-                if event.key == pygame.K_UP:
-                    direction_command = 2
-                if event.key == pygame.K_DOWN:
-                    direction_command = 3
+                if not game_over and not game_won:
+                    if event.key == pygame.K_RIGHT:
+                        direction_command = 0
+                    if event.key == pygame.K_LEFT:
+                        direction_command = 1
+                    if event.key == pygame.K_UP:
+                        direction_command = 2
+                    if event.key == pygame.K_DOWN:
+                        direction_command = 3
                 if event.key == pygame.K_SPACE or event.key == pygame.K_ESCAPE:
                     if game_over:
                         if event.key == pygame.K_SPACE:
