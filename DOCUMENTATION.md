@@ -1329,5 +1329,5 @@ The project serves as both a playable game and an educational resource for game 
 - Data persistence
 
 **Total Lines of Code**: ~1500 (excluding comments)
-**Development Time**: ~40 hours (estimated)
+**Development Time**: ~
 **Complexity**: Intermediate Python/Pygame project
