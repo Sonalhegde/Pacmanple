@@ -23,12 +23,24 @@
 
 ### Key Features
 - **Multiple Levels**: Two distinct maze layouts with increasing difficulty
+<<<<<<< HEAD
 - **Ghost AI**: Four unique ghost personalities with different chase algorithms
 - **Power-Up System**: Temporary ghost vulnerability with score multipliers
 - **High Score Tracking**: Persistent JSON-based leaderboard (top 5)
 - **Cyberpunk UI**: Animated backgrounds, chamfered panels, glitch effects
 - **Pause Menu**: In-game menu with Restart, Menu, and Quit options
 - **Randomized Bonuses**: Power pellet positions randomized each level
+=======
+- **Smart AI Ghosts**: Four ghosts with unique movement patterns
+- **High Score System**: Persistent storage of top 5 scores
+- **Modern UI**: Animated menus, pause functionality, and responsive controls
+- **Level Selection**: Choose your starting level
+- **Power-ups**: Eat power pellets to turn the tables on ghosts
+
+### Development Team
+
+- **SONAL HEGDE** -
+>>>>>>> d5dc95705f314893b1e392c0fd304574e950d057
 
 ---
 
@@ -1296,6 +1308,7 @@ draw_text(title, CYBER_YELLOW, x, y)
 
 ## 9. Future Enhancements
 
+<<<<<<< HEAD
 ### Potential Features
 1. **Sound Effects**: Dot eating, ghost eating, power-up, death
 2. **Music**: Background music with level variations
@@ -1307,6 +1320,25 @@ draw_text(title, CYBER_YELLOW, x, y)
 8. **Fruit Bonuses**: Temporary fruit spawns for extra points
 9. **Multiplayer**: Local co-op or versus mode
 10. **Mobile Port**: Touch controls for mobile devices
+=======
+### Development Team
+- 
+- **SONAL HEGDE** - NNM24AC050
+-
+
+### Technology Stack
+- **Python 3.13.2**
+- **Pygame 2.6.1**
+- **JSON** for data storage
+- **Math** for animations
+
+### Repository
+- **GitHub:** https://github.com/Sonalhegde/Pacmanple
+- **Version:** 1.0 Enhanced Edition
+
+### License
+This project is created for educational purposes.
+>>>>>>> d5dc95705f314893b1e392c0fd304574e950d057
 
 ---
 
@@ -1328,6 +1360,21 @@ The project serves as both a playable game and an educational resource for game 
 - UI/UX design
 - Data persistence
 
+<<<<<<< HEAD
 **Total Lines of Code**: ~1500 (excluding comments)
 **Development Time**: ~
 **Complexity**: Intermediate Python/Pygame project
+=======
+---
+
+## Contact & Support
+
+For questions, issues, or suggestions:
+- **GitHub Issues:** https://github.com/Sonalhegde/Pacmanple/issues
+- **Email:** Contact through GitHub profile
+
+---
+
+**Last Updated:** November 27, 2024
+*
+>>>>>>> d5dc95705f314893b1e392c0fd304574e950d057
