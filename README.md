@@ -1,9 +1,8 @@
-<<<<<<< HEAD
 
 
 
 
-=======
+
 # PAC-MAN CLASSIC EDITION - Complete Documentation
 
 ## Table of Contents
