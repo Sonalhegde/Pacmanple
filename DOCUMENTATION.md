@@ -1,4 +1,4 @@
-# Pac-Man Cyberpunk Edition - Comprehensive Technical Documentation
+# Pac-Man Cyberpunk Edition - Comprehensive Technical Documentation.
 
 ## Table of Contents
 1. [Project Overview](#1-project-overview)
