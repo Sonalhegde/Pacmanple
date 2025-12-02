@@ -27,9 +27,9 @@
 - **Level Selection**: Choose your starting level
 - **Power-ups**: Eat power pellets to turn the tables on ghosts
 
-### Development Team
+### Development Team: **SONAL HEGDE**
 
-- **SONAL HEGDE** -<img width="751" height="760" alt="image" src="https://github.com/user-attachments/assets/f00c173e-0c6d-4bae-acce-d546c558e125" />
+-  -<img width="751" height="760" alt="image" src="https://github.com/user-attachments/assets/f00c173e-0c6d-4bae-acce-d546c558e125" />
 
 <img width="2378" height="1136" alt="image" src="https://github.com/user-attachments/assets/afe64397-f2c2-4021-8cee-27c8e9788ce6" />
 
